@@ -193,7 +193,7 @@ class SmtpChannel {
 }
 
 async function ehlo(channel: SmtpChannel): Promise<SmtpResponse> {
-  return channel.command("EHLO pulse.local", [250]);
+  return channel.command("EHLO truedown.local", [250]);
 }
 
 async function authenticate(
@@ -238,12 +238,12 @@ export function buildMimeMessage(env: MailEnvironment, message: MailMessage): st
     "",
     "---",
     "Built with ❤️ by @wilspi",
-    "https://github.com/wilspi/uptime-pulse",
+    "https://github.com/wilspi/truedown",
   ].join("\r\n");
   const plainBody = wrapBase64(base64Utf8(plainText));
   const htmlBody = wrapBase64(base64Utf8(renderEmailHtml(env.SITE_NAME, message)));
   const messageId = `<${crypto.randomUUID()}@${messageIdDomain(env.SMTP_FROM)}>`;
-  const boundary = `pulse-${crypto.randomUUID()}`;
+  const boundary = `truedown-${crypto.randomUUID()}`;
 
   return [
     `Date: ${new Date().toUTCString()}`,
@@ -368,7 +368,7 @@ function renderEmailHtml(siteName: string, message: MailMessage): string {
           <tr>
             <td style="padding:22px 28px;background-color:#f7faf8;border-top:1px solid #e2ebe6;text-align:center;">
               <p style="margin:0 0 7px;color:#829189;font-size:11px;line-height:17px;">This is an automated notification from ${escapeHtml(siteName)}.</p>
-              <p style="margin:0;color:#7a8d83;font-size:12px;line-height:18px;">Built with <span style="color:#e11d48;">&#10084;&#65039;</span> by <a href="https://github.com/wilspi/uptime-pulse" style="color:#187c58;font-weight:700;text-decoration:none;">@wilspi</a></p>
+              <p style="margin:0;color:#7a8d83;font-size:12px;line-height:18px;">Built with <span style="color:#e11d48;">&#10084;&#65039;</span> by <a href="https://github.com/wilspi/truedown" style="color:#187c58;font-weight:700;text-decoration:none;">@wilspi</a></p>
             </td>
           </tr>
         </table>
@@ -438,7 +438,7 @@ function dotStuff(line: string): string {
 
 function messageIdDomain(address: string): string {
   const domain = address.split("@")[1];
-  return domain && /^[a-z0-9.-]+$/i.test(domain) ? domain : "pulse.local";
+  return domain && /^[a-z0-9.-]+$/i.test(domain) ? domain : "truedown.local";
 }
 
 function base64Utf8(value: string): string {

@@ -23,7 +23,7 @@ const failed: CheckResult = {
   responseHeaders: { "x-request-id": "private-trace" },
 };
 const timedOut: CheckResult = {
-  ...failed, latencyMs: 10000, httpStatus: null, error: "Timed out after 10000 ms.",
+  ...failed, latencyMs: 10000, httpStatus: null, error: "Timed out after 10000 ms waiting for a response.",
   failureKind: "timeout", responseBody: null, responseHeaders: {},
 };
 const passed: CheckResult = { ...failed, successful: true, httpStatus: 200, error: null, failureKind: null, responseBody: null, responseHeaders: {} };

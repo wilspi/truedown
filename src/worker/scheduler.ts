@@ -1,5 +1,6 @@
 import { MONITOR_WITH_CONTEXT_SELECT, splitMonitorContext, type MonitorWithContextRow } from "./db/check-context";
 import { recordCheck } from "./db/record-check";
+import { errorMessage, log } from "./log";
 import { checkMonitor } from "./monitoring/checker";
 import { deliverPendingNotifications } from "./notifications/delivery";
 
@@ -22,7 +23,7 @@ export async function runScheduledChecks(env: Env, scheduledTimeMs: number): Pro
   const lockExpiresAt = now + LOCK_SECONDS;
   const acquired = await acquireLock(env, now, lockExpiresAt);
   if (!acquired) {
-    console.warn(JSON.stringify({ message: "scheduled_check_skipped", reason: "lock_held" }));
+    log.warn("scheduled_check_skipped", { reason: "lock_held" });
     return;
   }
 
@@ -40,11 +41,10 @@ export async function runScheduledChecks(env: Env, scheduledTimeMs: number): Pro
     const checks = withinSubrequestBudget(due.results);
     if (checks.length < due.results.length) {
       // Oldest checks run first, so deferred monitors lead the next minute's batch.
-      console.warn(JSON.stringify({
-        message: "scheduled_checks_deferred",
+      log.warn("scheduled_checks_deferred", {
         due: due.results.length,
         deferred: due.results.length - checks.length,
-      }));
+      });
     }
 
     for (let index = 0; index < checks.length; index += CHECK_CONCURRENCY) {
@@ -55,13 +55,7 @@ export async function runScheduledChecks(env: Env, scheduledTimeMs: number): Pro
             const result = await checkMonitor(monitor);
             await recordCheck(env, monitor, result, context);
           } catch (error) {
-            console.error(
-              JSON.stringify({
-                message: "monitor_check_recording_failed",
-                monitorId: monitor.id,
-                error: error instanceof Error ? error.message : String(error),
-              }),
-            );
+            log.error("monitor_check_recording_failed", { monitorId: monitor.id, error: errorMessage(error) });
           }
         }),
       );

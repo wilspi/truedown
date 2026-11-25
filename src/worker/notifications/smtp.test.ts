@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildMimeMessage } from "./smtp";
 
 const mailEnvironment = {
-  SITE_NAME: "Uptime Pulse",
+  SITE_NAME: "TrueDown",
   SMTP_FROM: "alerts@example.com",
   SMTP_TO: "owner@example.com",
 };
@@ -11,9 +11,9 @@ describe("SMTP MIME messages", () => {
   it("includes rich and plain alert bodies with the project credit", () => {
     const mime = buildMimeMessage(mailEnvironment, {
       kind: "down",
-      subject: "[Uptime Pulse] API <primary> is down",
+      subject: "[TrueDown] API <primary> is down",
       body: [
-        "API <primary> has been confirmed down by Uptime Pulse.",
+        "API <primary> has been confirmed down by TrueDown.",
         "",
         "URL: https://example.com/health?ready=true&live=true",
         "Latest error: Expected <healthy> & got unavailable",
@@ -31,7 +31,7 @@ describe("SMTP MIME messages", () => {
     expect(html).toContain("API &lt;primary&gt; is down");
     expect(html).toContain("Expected &lt;healthy&gt; &amp; got unavailable");
     expect(html).toContain('href="https://example.com/health?ready=true&amp;live=true"');
-    expect(html).toContain("https://github.com/wilspi/uptime-pulse");
+    expect(html).toContain("https://github.com/wilspi/truedown");
     expect(html).not.toContain("API <primary>");
   });
 
@@ -41,7 +41,7 @@ describe("SMTP MIME messages", () => {
   ] as const)("renders the %s presentation", (kind, label) => {
     const mime = buildMimeMessage(mailEnvironment, {
       kind,
-      subject: `[Uptime Pulse] ${kind}`,
+      subject: `[TrueDown] ${kind}`,
       body: `A ${kind} notification.`,
     });
 
@@ -51,7 +51,7 @@ describe("SMTP MIME messages", () => {
 });
 
 function decodeAlternativeParts(mime: string): [string, string] {
-  const encodedParts = [...mime.matchAll(/Content-Transfer-Encoding: base64\r\n\r\n([A-Za-z0-9+/=\r\n]+?)\r\n--pulse-/g)]
+  const encodedParts = [...mime.matchAll(/Content-Transfer-Encoding: base64\r\n\r\n([A-Za-z0-9+/=\r\n]+?)\r\n--truedown-/g)]
     .map((match) => match[1].replace(/\r\n/g, ""));
   expect(encodedParts).toHaveLength(2);
   return encodedParts.map(decodeBase64Utf8) as [string, string];

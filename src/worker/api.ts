@@ -6,6 +6,7 @@ import { recordCheck } from "./db/record-check";
 import type { MonitorRow } from "./db/types";
 import { requireAdmin } from "./http/auth";
 import { readJsonBody } from "./http/body";
+import { errorMessage, log } from "./log";
 import { checkMonitor } from "./monitoring/checker";
 import { parseMonitorInput, parseSiteSettings, parseStatusPageInput, ValidationError } from "./monitoring/validation";
 import { isSmtpConfigured, sendSmtpMail, SmtpError } from "./notifications/smtp";
@@ -61,15 +62,14 @@ app.use("*", secureHeaders());
 app.use("*", async (c, next) => {
   const startedAt = performance.now();
   await next();
-  console.log(
-    JSON.stringify({
-      message: "api_request",
-      method: c.req.method,
-      path: c.req.path,
-      status: c.res.status,
-      durationMs: Math.round(performance.now() - startedAt),
-    }),
-  );
+  // Successful requests are not logged, so log volume tracks errors rather than page views.
+  if (c.res.ok) return;
+  log.warn("api_request_failed", {
+    method: c.req.method,
+    path: c.req.path,
+    status: c.res.status,
+    durationMs: Math.round(performance.now() - startedAt),
+  });
 });
 
 app.get("/api/status", async (c) => {
@@ -381,7 +381,7 @@ app.post("/api/admin/smtp/test", async (c) => {
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unknown SMTP error";
-    console.error(JSON.stringify({ message: "smtp_test_failed", error: detail }));
+    log.error("smtp_test_failed", { error: detail });
     return c.json({ error: detail }, error instanceof SmtpError && error.permanent ? 422 : 502);
   }
 
@@ -402,13 +402,7 @@ app.onError((error, c) => {
   if (error instanceof ConflictError) {
     return c.json({ error: error.message }, 409);
   }
-  console.error(
-    JSON.stringify({
-      message: "api_unhandled_error",
-      path: c.req.path,
-      error: error instanceof Error ? error.message : String(error),
-    }),
-  );
+  log.error("api_unhandled_error", { path: c.req.path, error: errorMessage(error) });
   return c.json({ error: "Internal server error" }, 500);
 });
 

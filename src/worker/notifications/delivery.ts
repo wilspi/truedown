@@ -1,3 +1,4 @@
+import { log } from "../log";
 import { sendSmtpMail, SmtpError } from "./smtp";
 
 interface NotificationRow {
@@ -44,13 +45,7 @@ async function deliverNotification(
     )
       .bind(now, notification.id)
       .run();
-    console.log(
-      JSON.stringify({
-        message: "notification_sent",
-        notificationId: notification.id,
-        kind: notification.kind,
-      }),
-    );
+    log.info("notification_sent", { notificationId: notification.id, kind: notification.kind });
   } catch (error) {
     const attempts = notification.attempts + 1;
     const permanent = error instanceof SmtpError && error.permanent;
@@ -66,15 +61,12 @@ async function deliverNotification(
     )
       .bind(status, attempts, now + delay, detail, notification.id)
       .run();
-    console.error(
-      JSON.stringify({
-        message: "notification_failed",
-        notificationId: notification.id,
-        kind: notification.kind,
-        attempts,
-        permanent,
-        error: detail,
-      }),
-    );
+    log.error("notification_failed", {
+      notificationId: notification.id,
+      kind: notification.kind,
+      attempts,
+      permanent,
+      error: detail,
+    });
   }
 }

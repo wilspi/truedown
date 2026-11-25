@@ -8,7 +8,7 @@ export default defineConfig({
       miniflare: {
         bindings: {
           TEST_MIGRATIONS: await readD1Migrations("./migrations"),
-          SITE_NAME: "Uptime Pulse Test",
+          SITE_NAME: "TrueDown Test",
           SMTP_HOST: "smtp.example.com",
           SMTP_PORT: "465",
           SMTP_FROM: "alerts@example.com",

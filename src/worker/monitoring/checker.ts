@@ -2,6 +2,7 @@ import type { FailureKind } from "../../shared/types";
 import type { MonitorRow } from "../db/types";
 
 const MAX_ASSERTION_BYTES = 64 * 1024;
+const MAX_EXCERPT_BYTES = 2048;
 
 export interface CheckResult {
   successful: boolean;
@@ -27,7 +28,7 @@ export async function checkMonitor(monitor: MonitorRow): Promise<CheckResult> {
       signal: AbortSignal.timeout(monitor.timeout_ms),
       headers: {
         Accept: monitor.expected_keyword ? "text/plain, application/json;q=0.9, */*;q=0.1" : "*/*",
-        "User-Agent": "Pulse-Uptime-Monitor/0.1",
+        "User-Agent": "TrueDown/0.1 (+https://github.com/wilspi/truedown)",
       },
     });
     httpStatus = response.status;
@@ -38,29 +39,28 @@ export async function checkMonitor(monitor: MonitorRow): Promise<CheckResult> {
       response.status < monitor.expected_status_min ||
       response.status > monitor.expected_status_max
     ) {
-      const responseBody = await failureExcerpt(response);
       return {
         successful: false,
         checkedAt,
         latencyMs,
         httpStatus: response.status,
         failureKind: "http",
-        responseBody,
+        responseBody: await failureExcerpt(response),
         responseHeaders,
         error: `Expected HTTP ${monitor.expected_status_min}-${monitor.expected_status_max}, received ${response.status}.`,
       };
     }
 
     if (monitor.expected_keyword) {
-      const body = await readBoundedBody(response, MAX_ASSERTION_BYTES);
-      if (!body.includes(monitor.expected_keyword)) {
+      const body = await readBoundedBody(response, MAX_ASSERTION_BYTES, monitor.expected_keyword);
+      if (!body.found) {
         return {
           successful: false,
           checkedAt,
           latencyMs,
           httpStatus: response.status,
           failureKind: "keyword",
-          responseBody: new TextDecoder().decode(new TextEncoder().encode(body).subarray(0, 2048)),
+          responseBody: truncateToBytes(body.text, MAX_EXCERPT_BYTES),
           responseHeaders,
           error: `Expected response text was not found in the first ${MAX_ASSERTION_BYTES / 1024} KiB.`,
         };
@@ -89,17 +89,23 @@ export async function checkMonitor(monitor: MonitorRow): Promise<CheckResult> {
       failureKind: isTimeout(error) ? "timeout" : httpStatus === null ? "network" : "body",
       responseBody: null,
       responseHeaders,
-      error: describeFetchError(error, monitor.timeout_ms),
+      error: describeFetchError(error, monitor.timeout_ms, httpStatus !== null),
     };
   }
 }
 
-async function readBoundedBody(response: Response, byteLimit: number): Promise<string> {
-  if (!response.body) return "";
+interface BoundedBody {
+  text: string;
+  /** Whether `until` appeared; reading stops there, so a stalled stream cannot fail a passing check. */
+  found: boolean;
+}
+
+async function readBoundedBody(response: Response, byteLimit: number, until?: string): Promise<BoundedBody> {
+  if (!response.body) return { text: "", found: false };
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let totalBytes = 0;
-  let content = "";
+  let text = "";
   let finished = false;
 
   try {
@@ -112,10 +118,13 @@ async function readBoundedBody(response: Response, byteLimit: number): Promise<s
       const remaining = byteLimit - totalBytes;
       const chunk = value.byteLength > remaining ? value.subarray(0, remaining) : value;
       totalBytes += chunk.byteLength;
-      content += decoder.decode(chunk, { stream: true });
+      // Rescan only the new text plus enough overlap to catch a match split across chunks.
+      const searchFrom = Math.max(0, text.length - (until?.length ?? 0) + 1);
+      text += decoder.decode(chunk, { stream: true });
+      if (until && text.includes(until, searchFrom)) return { text, found: true };
     }
-    content += decoder.decode();
-    return content;
+    text += decoder.decode();
+    return { text, found: until ? text.includes(until) : false };
   } finally {
     if (!finished) {
       try {
@@ -137,9 +146,12 @@ async function safelyCancelBody(response: Response): Promise<void> {
   }
 }
 
-function describeFetchError(error: unknown, timeoutMs: number): string {
+function describeFetchError(error: unknown, timeoutMs: number, headersReceived: boolean): string {
   if (isTimeout(error)) {
-    return `Timed out after ${timeoutMs} ms.`;
+    // Fixed wording per phase: consecutive failures with identical errors merge into one stored run.
+    return headersReceived
+      ? `Timed out after ${timeoutMs} ms reading the response body.`
+      : `Timed out after ${timeoutMs} ms waiting for a response.`;
   }
   if (error instanceof Error) {
     return `Request failed: ${error.message.slice(0, 220)}`;
@@ -167,9 +179,16 @@ async function failureExcerpt(response: Response): Promise<string | null> {
     return null;
   }
   try {
-    return await readBoundedBody(response, 2048);
+    return (await readBoundedBody(response, MAX_EXCERPT_BYTES)).text;
   } catch {
     // Preserve the HTTP failure even when its response body cannot be read.
     return null;
   }
+}
+
+function truncateToBytes(text: string, byteLimit: number): string {
+  const bytes = new TextEncoder().encode(text);
+  if (bytes.byteLength <= byteLimit) return text;
+  // Streaming mode drops a trailing partial character instead of emitting U+FFFD.
+  return new TextDecoder().decode(bytes.subarray(0, byteLimit), { stream: true });
 }

@@ -1,6 +1,6 @@
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
-	"name": "uptime-pulse",
+	"name": "truedown",
 	"main": "./src/worker/index.ts",
 	"compatibility_date": "2026-08-22",
 	"compatibility_flags": [
@@ -9,7 +9,7 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "uptime-pulse",
+			"database_name": "truedown",
 			"migrations_dir": "./migrations"
 		}
 	],

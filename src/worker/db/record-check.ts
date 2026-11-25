@@ -1,5 +1,6 @@
 import type { MonitorStatus } from "../../shared/types";
 import { transitionMonitorState } from "../monitoring/state-machine";
+import { log } from "../log";
 import type { CheckResult } from "../monitoring/checker";
 import { loadCheckContext } from "./check-context";
 import type { CheckContext, MonitorRow, OpenRunRow } from "./types";
@@ -153,7 +154,7 @@ export async function recordCheck(
   }
 
   await env.DB.batch(statements);
-  logEvent("monitor_checked", {
+  log.info("monitor_checked", {
     monitorId: monitor.id,
     successful: result.successful,
     latencyMs: result.latencyMs,
@@ -256,8 +257,4 @@ function formatDuration(seconds: number): string {
   if (minutes < 60) return `${minutes} minutes`;
   const hours = Math.floor(minutes / 60);
   return `${hours}h ${minutes % 60}m`;
-}
-
-function logEvent(message: string, fields: Record<string, unknown>): void {
-  console.log(JSON.stringify({ message, ...fields }));
 }

@@ -1,16 +1,14 @@
 import type { Context, Next } from "hono";
+import { log } from "../log";
 
 export async function requireAdmin(c: Context<{ Bindings: Env }>, next: Next): Promise<Response | void> {
   const authorization = c.req.header("Authorization") ?? "";
   const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
   if (!token || !(await constantTimeEqual(token, c.env.ADMIN_TOKEN))) {
-    console.warn(
-      JSON.stringify({
-        message: "admin_auth_failed",
-        path: c.req.path,
-        actorIp: c.req.header("CF-Connecting-IP") ?? null,
-      }),
-    );
+    log.warn("admin_auth_failed", {
+      path: c.req.path,
+      actorIp: c.req.header("CF-Connecting-IP") ?? null,
+    });
     return c.json({ error: "Unauthorized" }, 401, {
       "WWW-Authenticate": "Bearer",
     });

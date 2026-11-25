@@ -1,4 +1,6 @@
-# Uptime Pulse
+# TrueDown
+
+**Free uptime monitor and status page on Cloudflare Workers that alerts only on confirmed outages.**
 
 A small, self-hosted HTTP uptime monitor built for the Cloudflare Workers (works with Cloudflare's Free Plan). It includes a public status page, a token-protected admin dashboard, D1 history, one-minute Cron checks, and direct SMTP alerts over TLS.
 
@@ -15,13 +17,13 @@ The public API exposes only an endpoint's origin, never its path, query string, 
 
 ## Yet another uptime monitor?
 
-Uptime Pulse is a small, single-probe monitor built on Cloudflare Workers and D1. Each interval produces one check result from Cloudflare’s network; unlike UptimeRobot, Pingdom, or StatusCake, it does not provide configurable monitoring regions or simultaneous multi-location verification. It is intentionally simpler than status-page platforms such as Cachet or Statping-ng, requires no Node.js server to manage, and has no mandatory Uptime Pulse subscription.
+TrueDown is a small, single-probe monitor built on Cloudflare Workers and D1. Each interval produces one check result from Cloudflare’s network; unlike UptimeRobot, Pingdom, or StatusCake, it does not provide configurable monitoring regions or simultaneous multi-location verification. It is intentionally simpler than status-page platforms such as Cachet or Statping-ng, requires no Node.js server to manage, and has no mandatory TrueDown subscription.
 
-The self-hosted editions of Uptime Kuma, Statping-ng, and Healthchecks are excellent, but require you to operate a server, application process, or container. Uptime Pulse instead runs on Cloudflare’s serverless platform and can fit within the Free plan at low usage. Your SMTP relay, domain, or usage beyond Cloudflare’s included limits may still incur costs.
+The self-hosted editions of Uptime Kuma, Statping-ng, and Healthchecks are excellent, but require you to operate a server, application process, or container. TrueDown instead runs on Cloudflare’s serverless platform and can fit within the Free plan at low usage. Your SMTP relay, domain, or usage beyond Cloudflare’s included limits may still incur costs.
 
 ## Reliability model
 
-No single-location uptime monitor can promise zero false positives. Uptime Pulse is deliberately conservative:
+No single-location uptime monitor can promise zero false positives. TrueDown is deliberately conservative:
 
 - Three consecutive failures confirm an outage and open an incident.
 - Two consecutive successes confirm recovery.
@@ -56,7 +58,7 @@ npm run dev
 Edit `.dev.vars` with development-only values:
 
 ```dotenv
-SITE_NAME="Uptime Pulse"
+SITE_NAME="TrueDown"
 SMTP_HOST="smtp.example.com"
 SMTP_PORT="465"
 SMTP_FROM="alerts@example.com"
@@ -66,7 +68,7 @@ SMTP_USERNAME="your-smtp-username"
 SMTP_PASSWORD="your-smtp-password"
 ```
 
-The SMTP server must support authenticated `AUTH PLAIN` or `AUTH LOGIN`. Cloudflare blocks outbound port 25, so it is intentionally unsupported. Your provider may still charge for mail; Uptime Pulse itself does not require Cloudflare Email Sending.
+The SMTP server must support authenticated `AUTH PLAIN` or `AUTH LOGIN`. Cloudflare blocks outbound port 25, so it is intentionally unsupported. Your provider may still charge for mail; TrueDown itself does not require Cloudflare Email Sending.
 
 Run all checks with:
 
@@ -97,11 +99,11 @@ npm run db:migrate:remote
 npm run deploy
 ```
 
-The Cron trigger is declared in `wrangler.jsonc`, so deployment installs the one-minute schedule. Open `https://uptime-pulse.<your-subdomain>.workers.dev/#admin` and enter the admin token to add the first monitor.
+The Cron trigger is declared in `wrangler.jsonc`, so deployment installs the one-minute schedule. Open `https://truedown.<your-subdomain>.workers.dev/#admin` and enter the admin token to add the first monitor.
 
 ### Custom domain
 
-In the Cloudflare dashboard, open **Workers & Pages → uptime-pulse → Settings → Domains & Routes → Add → Custom Domain** and choose a hostname in a zone on the same account, such as `status.example.com`. Cloudflare provisions and renews TLS automatically.
+In the Cloudflare dashboard, open **Workers & Pages → truedown → Settings → Domains & Routes → Add → Custom Domain** and choose a hostname in a zone on the same account, such as `status.example.com`. Cloudflare provisions and renews TLS automatically.
 
 ## SMTP choices
 
@@ -113,7 +115,7 @@ Only one recipient is supported by design. Keeping SMTP credentials in Worker se
 
 The default ceiling of 20 monitors is an application safety guard. At one-minute intervals that is at most 28,800 outbound checks per day, plus 1,440 scheduled invocations. Hourly aggregation avoids storing every response as a database row. Failure diagnostics are stored as runs of consecutive failures with the same cause, so healthy monitors add no extra D1 writes; an outage costs about one write per failed check. Hourly aggregates and failure runs are retained for 90 days. Each scheduled check uses two subrequests (the HTTP check and one D1 batch), keeping a run of 20 monitors under the free plan's 50-subrequest limit; monitors that follow redirects are budgeted extra, and any that do not fit are checked first in the next minute. Before raising the ceiling, compare your actual Workers requests, CPU, subrequests, and D1 row usage with Cloudflare's current free-plan limits.
 
-The status response is browser-cacheable for 30 seconds. Admin requests are never exposed by the public API. Cloudflare structured logs record request metadata and scheduler events; D1 stores the last 100 admin audit entries shown in the dashboard.
+The status response is browser-cacheable for 30 seconds. Admin requests are never exposed by the public API. Cloudflare structured logs record failed (non-2xx) requests, each check, and scheduler events; D1 stores the last 100 admin audit entries shown in the dashboard.
 
 ## Downtime diagnostics
 
@@ -146,4 +148,4 @@ npm run deploy              # build and deploy
 
 ## License
 
-Uptime Pulse is available under the [MIT License](LICENSE).
+TrueDown is available under the [MIT License](LICENSE).

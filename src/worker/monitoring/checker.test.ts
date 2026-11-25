@@ -22,6 +22,29 @@ describe("failed response diagnostics", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("unavailable"));
     expect(await checkMonitor({ ...monitor, expected_keyword: "healthy" })).toMatchObject({ successful: false, httpStatus: 200, failureKind: "keyword", responseBody: "unavailable" });
   });
+  it("passes as soon as the keyword arrives, without waiting for the body to end", async () => {
+    let cancelled = false;
+    const body = new ReadableStream({
+      start(controller) { controller.enqueue(new TextEncoder().encode("status: healthy")); },
+      cancel() { cancelled = true; },
+    });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(body));
+    expect(await checkMonitor({ ...monitor, expected_keyword: "healthy" })).toMatchObject({ successful: true, httpStatus: 200 });
+    expect(cancelled).toBe(true);
+  });
+  it("finds a keyword split across chunks", async () => {
+    const body = new ReadableStream({
+      start(controller) {
+        for (const part of ["status: hea", "lt", "hy"]) controller.enqueue(new TextEncoder().encode(part));
+      },
+    });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(body));
+    expect(await checkMonitor({ ...monitor, expected_keyword: "healthy" })).toMatchObject({ successful: true });
+  });
+  it("truncates keyword-failure excerpts without splitting a character", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(`${"x".repeat(2047)}é`));
+    expect(await checkMonitor({ ...monitor, expected_keyword: "healthy" })).toMatchObject({ failureKind: "keyword", responseBody: "x".repeat(2047) });
+  });
   it("preserves an HTTP error when reading its body fails", async () => {
     const body = new ReadableStream({ start(controller) { controller.error(new Error("body disconnected")); } });
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(body, { status: 502, headers: { "Content-Type": "text/plain" } }));
@@ -38,6 +61,16 @@ describe("failed response diagnostics", () => {
   ])("classifies requests without an HTTP response", async (error, failureKind) => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(error);
     expect(await checkMonitor(monitor)).toMatchObject({ successful: false, httpStatus: null, failureKind, responseBody: null });
+  });
+  it("names the phase a timeout happened in", async () => {
+    const timeout = new DOMException("timed out", "TimeoutError");
+    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(timeout);
+    expect(await checkMonitor(monitor)).toMatchObject({ error: "Timed out after 1000 ms waiting for a response." });
+    const body = new ReadableStream({ start(controller) { controller.error(timeout); } });
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(body));
+    expect(await checkMonitor({ ...monitor, expected_keyword: "healthy" })).toMatchObject({
+      httpStatus: 200, failureKind: "timeout", error: "Timed out after 1000 ms reading the response body.",
+    });
   });
   it("does not retain successful bodies or binary failure bodies", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch");

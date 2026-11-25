@@ -87,7 +87,7 @@ export function App() {
         {/* A shared page does not link to the homepage or the admin area. */}
         {pageSlug
           ? <span className="brand"><span className="brand-mark"><span /></span>{status?.siteName ?? "Status"}</span>
-          : <a className="brand" href="/" aria-label="Status home"><span className="brand-mark"><span /></span>{status?.siteName ?? "Uptime Pulse"}</a>}
+          : <a className="brand" href="/" aria-label="Status home"><span className="brand-mark"><span /></span>{status?.siteName ?? "TrueDown"}</a>}
         {!pageSlug && <button className="text-button" type="button" onClick={showAdmin}>Manage</button>}
       </header>
 
@@ -149,7 +149,7 @@ function MonitorCard({ monitor, generatedAt }: { monitor: PublicMonitor; generat
         </div>
         <StatusBadge status={monitor.status} />
       </div>
-      <div className="pulse-strip" aria-label="Last 24 hours of hourly results">
+      <div className="hour-strip" aria-label="Last 24 hours of hourly results">
         {Array.from({ length: 24 }, (_, index) => {
           const hour = latestHour - (23 - index) * 3600;
           const metric = metrics.get(hour);
@@ -167,13 +167,13 @@ function MonitorCard({ monitor, generatedAt }: { monitor: PublicMonitor; generat
         <span><strong>{monitor.lastCheckedAt ? relativeTime(monitor.lastCheckedAt) : "Never"}</strong> last check</span>
       </div>
       {monitor.lastError && monitor.status !== "up" && <p className="monitor-error">{monitor.lastError}</p>}
-      {selection && <CheckDetailsDialog selection={selection} token={sessionStorage.getItem("pulse-admin-token") ?? undefined} onClose={() => setSelection(null)} />}
+      {selection && <CheckDetailsDialog selection={selection} token={sessionStorage.getItem("truedown-admin-token") ?? undefined} onClose={() => setSelection(null)} />}
     </article>
   );
 }
 
 function AdminPanel({ onClose }: { onClose: () => void }) {
-  const [token, setToken] = useState(() => sessionStorage.getItem("pulse-admin-token") ?? "");
+  const [token, setToken] = useState(() => sessionStorage.getItem("truedown-admin-token") ?? "");
   const [authorized, setAuthorized] = useState(false);
   const [monitors, setMonitors] = useState<AdminMonitor[]>([]);
   const [incidents, setIncidents] = useState<IncidentSummary[]>([]);
@@ -209,7 +209,7 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
         request<{ pages: StatusPage[] }>("/api/admin/pages"),
         request<{ settings: SiteSettings }>("/api/admin/settings"),
       ]);
-      sessionStorage.setItem("pulse-admin-token", token);
+      sessionStorage.setItem("truedown-admin-token", token);
       setMonitors(monitorData.monitors);
       setIncidents(incidentData.incidents);
       setLogs(logData.logs);
@@ -246,7 +246,7 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
   if (!authorized) {
     return (
       <main className="shell admin-shell">
-        <header className="topbar"><button className="brand plain-button" onClick={onClose}><span className="brand-mark"><span /></span>Uptime Pulse</button></header>
+        <header className="topbar"><button className="brand plain-button" onClick={onClose}><span className="brand-mark"><span /></span>TrueDown</button></header>
         <section className="login-card">
           <p className="eyebrow">Private area</p>
           <h1>Manage monitors</h1>
@@ -266,7 +266,7 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
   return (
     <main className="shell admin-shell">
       <header className="topbar">
-        <button className="brand plain-button" onClick={onClose}><span className="brand-mark"><span /></span>Uptime Pulse - Admin</button>
+        <button className="brand plain-button" onClick={onClose}><span className="brand-mark"><span /></span>TrueDown - Admin</button>
         <div className="header-actions">
           <button className="secondary-button" disabled={busy} onClick={() => void act(() => request("/api/admin/smtp/test", { method: "POST" }), "Test email sent.")}>Test Email</button>
           <button className="primary-button" onClick={() => setEditing("new")}>Add monitor</button>
@@ -342,7 +342,7 @@ function SiteFooter({ children }: { children?: React.ReactNode }) {
       {children && <p>{children}</p>}
       <p>
         Built with <span className="footer-heart" aria-label="love">❤️</span> by{" "}
-        <a href="https://github.com/wilspi/uptime-pulse" target="_blank" rel="noreferrer">@wilspi</a>
+        <a href="https://github.com/wilspi/truedown" target="_blank" rel="noreferrer">@wilspi</a>
       </p>
     </footer>
   );

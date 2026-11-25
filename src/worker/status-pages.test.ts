@@ -1,7 +1,7 @@
 /// <reference types="@cloudflare/vitest-plugin/types" />
 import { env } from "cloudflare:workers";
 import { applyD1Migrations, type D1Migration } from "cloudflare:test";
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "./api";
 import type { AdminMonitor, PublicStatusResponse, StatusPage, StatusPageInput } from "../shared/types";
 
@@ -51,6 +51,20 @@ beforeEach(async () => {
   await setHomepage(true);
   billing = await createMonitor("Billing", true);
   internal = await createMonitor("Internal", false);
+});
+
+afterEach(() => vi.restoreAllMocks());
+
+describe("request logging", () => {
+  it("logs only requests that did not succeed", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await call("/api/status");
+    expect(warn).not.toHaveBeenCalled();
+    await call("/api/missing");
+    expect(warn.mock.calls.map(([line]) => JSON.parse(line as string))).toEqual([
+      expect.objectContaining({ message: "api_request_failed", method: "GET", path: "/api/missing", status: 404 }),
+    ]);
+  });
 });
 
 describe("homepage visibility", () => {

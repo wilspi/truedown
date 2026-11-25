@@ -1,5 +1,5 @@
 # Copy this file to .dev.vars and replace every value.
-SITE_NAME="Uptime Pulse"
+SITE_NAME="TrueDown"
 SMTP_HOST="smtp.example.com"
 SMTP_PORT="465"
 SMTP_FROM="alerts@example.com"
