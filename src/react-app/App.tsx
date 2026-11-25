@@ -10,6 +10,7 @@ import type {
   SiteSettings,
   StatusPage,
 } from "../shared/types";
+import { TRUEDOWN_SITE_URL } from "../shared/project";
 
 import { CheckDetailsDialog, formatTime, type DetailSelection } from "./CheckDetailsDialog";
 import { SharingSection, StatusPageDialog } from "./StatusPages";
@@ -341,8 +342,7 @@ function SiteFooter({ children }: { children?: React.ReactNode }) {
     <footer className="site-footer">
       {children && <p>{children}</p>}
       <p>
-        Built with <span className="footer-heart" aria-label="love">❤️</span> by{" "}
-        <a href="https://github.com/wilspi/truedown" target="_blank" rel="noreferrer">@wilspi</a>
+        Powered by <a href={TRUEDOWN_SITE_URL} target="_blank" rel="noreferrer">TrueDown</a>
       </p>
     </footer>
   );

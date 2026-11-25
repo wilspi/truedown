@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { TRUEDOWN_SITE_URL } from "../../shared/project";
 import { buildMimeMessage } from "./smtp";
 
 const mailEnvironment = {
@@ -26,12 +27,12 @@ describe("SMTP MIME messages", () => {
 
     const [plainText, html] = decodeAlternativeParts(mime);
     expect(plainText).toContain("API <primary> has been confirmed down");
-    expect(plainText).toContain("Built with ❤️ by @wilspi");
+    expect(plainText).toContain(`Sent by TrueDown · ${TRUEDOWN_SITE_URL}`);
     expect(html).toContain("Incident alert");
     expect(html).toContain("API &lt;primary&gt; is down");
     expect(html).toContain("Expected &lt;healthy&gt; &amp; got unavailable");
     expect(html).toContain('href="https://example.com/health?ready=true&amp;live=true"');
-    expect(html).toContain("https://github.com/wilspi/truedown");
+    expect(html).toContain(`href="${TRUEDOWN_SITE_URL}"`);
     expect(html).not.toContain("API <primary>");
   });
 

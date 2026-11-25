@@ -1,4 +1,5 @@
 import { connect } from "cloudflare:sockets";
+import { TRUEDOWN_SITE_URL } from "../../shared/project";
 
 const CONNECTION_TIMEOUT_MS = 10_000;
 const COMMAND_TIMEOUT_MS = 10_000;
@@ -237,8 +238,7 @@ export function buildMimeMessage(env: MailEnvironment, message: MailMessage): st
     normalizeBody(message.body),
     "",
     "---",
-    "Built with ❤️ by @wilspi",
-    "https://github.com/wilspi/truedown",
+    `Sent by TrueDown · ${TRUEDOWN_SITE_URL}`,
   ].join("\r\n");
   const plainBody = wrapBase64(base64Utf8(plainText));
   const htmlBody = wrapBase64(base64Utf8(renderEmailHtml(env.SITE_NAME, message)));
@@ -368,7 +368,7 @@ function renderEmailHtml(siteName: string, message: MailMessage): string {
           <tr>
             <td style="padding:22px 28px;background-color:#f7faf8;border-top:1px solid #e2ebe6;text-align:center;">
               <p style="margin:0 0 7px;color:#829189;font-size:11px;line-height:17px;">This is an automated notification from ${escapeHtml(siteName)}.</p>
-              <p style="margin:0;color:#7a8d83;font-size:12px;line-height:18px;">Built with <span style="color:#e11d48;">&#10084;&#65039;</span> by <a href="https://github.com/wilspi/truedown" style="color:#187c58;font-weight:700;text-decoration:none;">@wilspi</a></p>
+              <p style="margin:0;color:#7a8d83;font-size:12px;line-height:18px;">Sent by <a href="${TRUEDOWN_SITE_URL}" style="color:#187c58;font-weight:700;text-decoration:none;">TrueDown</a></p>
             </td>
           </tr>
         </table>
