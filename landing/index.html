@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrueDown: free, self-hosted uptime monitor on Cloudflare Workers</title>
+  <meta name="description" content="Open-source uptime monitor and status page on the Cloudflare Workers free plan. Emails you only after three failed checks in a row, never for one blip.">
+  <link rel="canonical" href="https://wilspi.github.io/truedown/">
+  <meta name="theme-color" content="#f6f4ef">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TrueDown">
+  <meta property="og:title" content="TrueDown: an uptime monitor that waits for proof">
+  <meta property="og:description" content="Open-source uptime monitor and status page on the Cloudflare Workers free plan. Alerts only on confirmed outages. No server to run.">
+  <meta property="og:url" content="https://wilspi.github.io/truedown/">
+  <meta property="og:image" content="https://wilspi.github.io/truedown/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="TrueDown: alerts only on confirmed outages. Runs on Cloudflare Workers.">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "TrueDown",
+    "description": "Self-hosted uptime monitor and status page for Cloudflare Workers. Confirms outages with three consecutive failed checks before alerting by email.",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Cloudflare Workers",
+    "url": "https://wilspi.github.io/truedown/",
+    "downloadUrl": "https://github.com/wilspi/truedown",
+    "license": "https://opensource.org/licenses/MIT",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Person", "name": "wilspi", "url": "https://github.com/wilspi" }
+  }
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="top wrap">
+    <a class="wordmark" href="./" aria-label="TrueDown home"><span class="logo-dot" aria-hidden="true"></span>TrueDown</a>
+    <nav aria-label="Main">
+      <a href="#how">How alerts work</a>
+      <a href="#compare">Compare</a>
+      <a href="#setup">Setup</a>
+      <a class="gh" href="https://github.com/wilspi/truedown">GitHub</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero wrap">
+      <div class="hero-text">
+        <p class="kicker">Alerts on real outages, not blips.</p>
+        <h1>An uptime monitor that waits for proof before it wakes you up.</h1>
+        <p class="lede">TrueDown checks your sites every minute and emails you only after <strong>three failed checks in a row</strong>. A single slow response or DNS hiccup gets recorded, not alerted. It runs on the Cloudflare Workers free plan, so there's no server to patch and no subscription.</p>
+        <p class="actions">
+          <a class="btn" href="https://github.com/wilspi/truedown">Get it on GitHub</a>
+          <a class="link" href="#setup">See the setup &rarr;</a>
+        </p>
+        <p class="facts">Free to run &middot; Cloudflare Workers + D1 &middot; Emails only after 3 failed checks &middot; MIT licensed</p>
+      </div>
+    </section>
+
+    <section class="shot-wrap wrap" aria-label="What the status page looks like">
+      <div class="shot">
+        <div class="app-list">
+          <figure class="app-card">
+          <div class="app-head">
+            <span class="app-icon" aria-hidden="true">BA</span>
+            <div>
+              <p class="app-name">Billing API</p>
+              <p class="app-sub">api.example.com</p>
+            </div>
+            <span class="badge up"><i></i>Up</span>
+          </div>
+          <ol class="strip" aria-label="Last 24 hours, one block per hour. Two hours had a failed check."><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="y"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="y sel"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="n"></li></ol>
+          <div class="strip-caption"><span>23 hours ago</span><span>Each block is 1 hour &middot; Click for details</span><span>Current hour</span></div>
+          <div class="strip-key"><span><i class="g"></i>All passed</span><span><i class="y"></i>80&ndash;&lt;100% passed</span><span><i class="r"></i>Below 80% passed</span><span><i class="n"></i>No checks</span></div>
+          <p class="app-stats"><span><b>99.931%</b> 30-day uptime</span><span><b>212 ms</b> response</span><span><b>1m ago</b> last check</span></p>
+        </figure>
+          <figure class="app-card">
+            <div class="app-head">
+              <span class="app-icon" aria-hidden="true">MS</span>
+              <div>
+                <p class="app-name">Marketing site</p>
+                <p class="app-sub">www.example.com</p>
+              </div>
+              <span class="badge up"><i></i>Up</span>
+            </div>
+            <ol class="strip" aria-label="Last 24 hours, every hour passed."><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="g"></li><li class="n"></li></ol>
+            <p class="app-stats"><span><b>100.000%</b> 30-day uptime</span><span><b>48 ms</b> response</span><span><b>1m ago</b> last check</span></p>
+          </figure>
+        </div>
+
+        <figure class="app-detail">
+          <p class="eyebrow">Hourly check details</p>
+          <p class="app-name">Billing API</p>
+          <p class="app-time">25 Nov 2026, 01:00:00 &ndash; 01:59:59</p>
+          <p class="callout"><b>Yellow block:</b> 1 of 60 checks failed (98.3% passed). No outage was confirmed, so this was a brief failure. An outage needs 3 consecutive failures.</p>
+          <div class="tiles">
+            <div><b>60</b><span>Checks</span></div>
+            <div><b>1</b><span>Failed</span></div>
+            <div><b>None</b><span>Confirmed downtime</span></div>
+            <div><b>353 ms</b><span>Avg. response</span></div>
+          </div>
+          <p class="app-h">What happened</p>
+          <p class="run"><span class="run-fail">1 failed</span><span>01:35</span><span class="run-cause">Unexpected HTTP 503</span><span class="run-ok">Passing again at 01:36</span></p>
+          <p class="app-h">Confirmed incidents</p>
+          <p class="app-muted">No confirmed incident overlaps this hour.</p>
+        </figure>
+      </div>
+      <p class="shot-caption">Monitors on the public status page, and the details that open when you click the highlighted yellow hour. One 503 isn't an outage, so no email went out.</p>
+    </section>
+
+    <section id="how" class="band">
+      <div class="wrap">
+        <h2>How an alert gets sent</h2>
+        <p class="section-lede">Most false alarms come from one bad check. TrueDown treats a single failure as a data point, not an incident.</p>
+
+        <div class="timeline" role="img" aria-label="Checks: pass, pass, fail, fail, fail (outage confirmed, email sent), fail, pass, pass (recovery confirmed, email sent)">
+          <div class="tick ok"><span>✓</span><small>12:00</small></div>
+          <div class="tick ok"><span>✓</span><small>12:01</small></div>
+          <div class="tick bad start"><span>✗</span><small>12:02</small></div>
+          <div class="tick bad"><span>✗</span><small>12:03</small></div>
+          <div class="tick bad alert"><span>✗</span><small>12:04</small><em>Down email</em></div>
+          <div class="tick bad"><span>✗</span><small>12:05</small></div>
+          <div class="tick ok"><span>✓</span><small>12:06</small></div>
+          <div class="tick ok alert"><span>✓</span><small>12:07</small><em>Recovery email</em></div>
+        </div>
+
+        <ol class="rules">
+          <li><strong>Three failures in a row confirm an outage.</strong> The incident is dated from the first failure (12:02 above), not from when the alert went out.</li>
+          <li><strong>Two passes in a row confirm recovery.</strong> If a recovery check fails, the incident goes straight back to down.</li>
+          <li><strong>Late checks show as unknown.</strong> If the scheduler misses a run, the status page says so instead of showing old green as current.</li>
+          <li><strong>Mail trouble doesn't lose data.</strong> Incidents are recorded first; emails retry separately with backoff.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="wrap features">
+      <h2>What's in it</h2>
+      <dl>
+        <div>
+          <dt>Checks</dt>
+          <dd>HTTP and HTTPS every 1, 5 or 15 minutes. Set the expected status range, a timeout, and optionally text that must appear in the response.</dd>
+        </div>
+        <div>
+          <dt>Alerts</dt>
+          <dd>Down and recovery emails through your own SMTP provider on port 465 or 587. Any relay with SMTP credentials will do, such as Amazon SES, Postmark or Brevo.</dd>
+        </div>
+        <div>
+          <dt>Hourly history</dt>
+          <dd>Every hour is a block you can open: checks passed, response times, confirmed downtime, and each run of failures with its cause. Admins also see a response excerpt and when alerts were emailed.</dd>
+        </div>
+        <div>
+          <dt>Status pages</dt>
+          <dd>A public homepage plus separate pages at <code>/s/your-link</code>, each showing only the monitors you pick. Useful for giving a client their own view.</dd>
+        </div>
+        <div>
+          <dt>Privacy</dt>
+          <dd>Public pages show an endpoint's origin, never its path, query string, raw errors or response body. Shared pages are sent with <code>noindex</code>.</dd>
+        </div>
+        <div>
+          <dt>Cost</dt>
+          <dd>Built so 20 monitors at one-minute intervals fit within Cloudflare's free plan. Hourly aggregates mean a healthy monitor adds almost nothing to your database.</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section id="compare" class="band">
+      <div class="wrap">
+        <h2>How it compares</h2>
+        <p class="section-lede">TrueDown sits between running your own monitoring server and paying for a hosted service.</p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col"></th>
+                <th scope="col" class="us">TrueDown</th>
+                <th scope="col">Self-hosted<br><span>Uptime Kuma, Statping-ng</span></th>
+                <th scope="col">Hosted<br><span>UptimeRobot, Pingdom, StatusCake</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Runs on</th><td class="us">Your Cloudflare account</td><td>A VPS, home server or container</td><td>The vendor's servers</td></tr>
+              <tr><th scope="row">Server to maintain</th><td class="us">None</td><td>Yes</td><td>None</td></tr>
+              <tr><th scope="row">Price</th><td class="us">Free plan at this scale</td><td>Your hosting bill</td><td>Free tier, then monthly</td></tr>
+              <tr><th scope="row">Where data lives</th><td class="us">Your D1 database</td><td>Your server</td><td>Vendor account</td></tr>
+              <tr><th scope="row">Check locations</th><td class="us">One (Cloudflare's network)</td><td>Wherever you host it</td><td>Several regions</td></tr>
+              <tr><th scope="row">Check types</th><td class="us">HTTP/HTTPS</td><td>HTTP, TCP, ping, DNS and more</td><td>HTTP, TCP, ping, DNS and more</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap limits">
+      <h2>What it doesn't do</h2>
+      <p class="section-lede">It's deliberately small. If you need any of these, a hosted service or Uptime Kuma is the better pick.</p>
+      <ul>
+        <li>No multi-region checks. Every check comes from Cloudflare's network, so a regional outage elsewhere may not show up.</li>
+        <li>No SMS, Slack or webhook alerts yet. Email only, to one recipient.</li>
+        <li>No TCP, ping or DNS checks. HTTP and HTTPS only.</li>
+        <li>20 monitors by default. The cap keeps a run under the free plan's subrequest limit; you can raise it after checking your Cloudflare usage.</li>
+        <li>No port 25. Cloudflare blocks it, so you need an SMTP relay that accepts 465 or 587.</li>
+      </ul>
+    </section>
+
+    <section id="setup" class="band">
+      <div class="wrap setup">
+        <div>
+          <h2>Setup</h2>
+          <p>You need Node.js 22+, a Cloudflare account and SMTP credentials. Put your settings in <code>.dev.vars</code>, then:</p>
+          <p>Open <code>/#admin</code> on your Worker, paste your admin token and add your first monitor. To use your own hostname, add a custom domain to the Worker in the Cloudflare dashboard.</p>
+          <p><a class="link" href="https://github.com/wilspi/truedown#readme">Full instructions in the README &rarr;</a></p>
+        </div>
+<pre><code><span class="c"># get the code</span>
+git clone https://github.com/wilspi/truedown.git
+cd truedown &amp;&amp; npm install
+
+<span class="c"># deploy to your Cloudflare account</span>
+npx wrangler login
+npx wrangler secret bulk .dev.vars
+npm run db:migrate:remote
+npm run deploy</code></pre>
+      </div>
+    </section>
+
+    <section class="wrap faq">
+      <h2>Questions</h2>
+      <details>
+        <summary>Is it actually free?</summary>
+        <p>TrueDown is MIT licensed and has no paid tier. Twenty monitors checked every minute are designed to stay within Cloudflare's Workers free plan. Your SMTP provider may charge for mail, though most have a free allowance far above what outage alerts need.</p>
+      </details>
+      <details>
+        <summary>Why wait for three failures? Won't I hear about outages later?</summary>
+        <p>On a one-minute interval you'll hear about it about two minutes later than a monitor that alerts on the first failure. In exchange, a single dropped connection doesn't send you an email. The incident's start time is still the first failed check, so your downtime numbers stay accurate.</p>
+      </details>
+      <details>
+        <summary>Can I show a status page to customers?</summary>
+        <p>Yes. The homepage can list the monitors you choose, and you can create separate pages, each with its own link, title and set of monitors. A page link hides the page; it isn't a login, so anyone with the link can see that one page.</p>
+      </details>
+      <details>
+        <summary>Does it need Cloudflare Email?</summary>
+        <p>No. TrueDown has its own small SMTP client built on Workers sockets, so it talks to any authenticated SMTP relay directly.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer class="foot wrap">
+    <p>TrueDown is open source under the MIT License. Made by <a href="https://github.com/wilspi">wilspi</a>.</p>
+    <p><a href="https://github.com/wilspi/truedown">Source</a> &middot; <a href="https://github.com/wilspi/truedown/issues">Report an issue</a></p>
+  </footer>
+</body>
+</html>
